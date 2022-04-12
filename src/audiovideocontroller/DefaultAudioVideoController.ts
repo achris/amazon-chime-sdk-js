@@ -54,6 +54,7 @@ import OpenSignalingConnectionTask from '../task/OpenSignalingConnectionTask';
 import ParallelGroupTask from '../task/ParallelGroupTask';
 import PromoteToPrimaryMeetingTask from '../task/PromoteToPrimaryMeetingTask';
 import ReceiveAudioInputTask from '../task/ReceiveAudioInputTask';
+import ReceiveRemoteVideoPauseResume from '../task/ReceiveRemoteVideoPauseResumeTask';
 import ReceiveTURNCredentialsTask from '../task/ReceiveTURNCredentialsTask';
 import ReceiveVideoInputTask from '../task/ReceiveVideoInputTask';
 import ReceiveVideoStreamIndexTask from '../task/ReceiveVideoStreamIndexTask';
@@ -71,7 +72,9 @@ import VideoOnlyTransceiverController from '../transceivercontroller/VideoOnlyTr
 import { Maybe } from '../utils/Types';
 import DefaultVideoCaptureAndEncodeParameter from '../videocaptureandencodeparameter/DefaultVideoCaptureAndEncodeParameter';
 import AllHighestVideoBandwidthPolicy from '../videodownlinkbandwidthpolicy/AllHighestVideoBandwidthPolicy';
+import ServerSideNetworkAdaption from '../videodownlinkbandwidthpolicy/ServerSideNetworkAdaption';
 import VideoAdaptiveProbePolicy from '../videodownlinkbandwidthpolicy/VideoAdaptiveProbePolicy';
+import VideoPreferences from '../videodownlinkbandwidthpolicy/VideoPreferences';
 import VideoSource from '../videosource/VideoSource';
 import DefaultVideoStreamIdSet from '../videostreamidset/DefaultVideoStreamIdSet';
 import DefaultVideoStreamIndex from '../videostreamindex/DefaultVideoStreamIndex';
@@ -399,6 +402,7 @@ export default class DefaultAudioVideoController
     const setLocalDescription = new SetLocalDescriptionTask(context).once(createSDP);
     const ice = new FinishGatheringICECandidatesTask(context).once(setLocalDescription);
     const subscribeAck = new SubscribeAndReceiveSubscribeAckTask(context).once(ice);
+    const receivePauseResume = new ReceiveRemoteVideoPauseResume(context).once(subscribeAck);
 
     // The ending is a delicate time: we need the connection as a whole to have a timeout,
     // and for the attendee presence timer to not start ticking until after the subscribe/ack.
@@ -410,6 +414,7 @@ export default class DefaultAudioVideoController
           // The order of these two matters. If canceled, the first one that's still running
           // will contribute any special rejection, and we don't want that to be "attendee not found"!
           subscribeAck,
+          receivePauseResume,
           needsToWaitForAttendeePresence
             ? new TimeoutTask(
                 this.logger,
@@ -457,6 +462,7 @@ export default class DefaultAudioVideoController
             new SetLocalDescriptionTask(this.meetingSessionContext),
             new FinishGatheringICECandidatesTask(this.meetingSessionContext),
             new SubscribeAndReceiveSubscribeAckTask(this.meetingSessionContext),
+            new ReceiveRemoteVideoPauseResume(this.meetingSessionContext),
             needsToWaitForAttendeePresence
               ? new TimeoutTask(
                   this.logger,
@@ -841,6 +847,10 @@ export default class DefaultAudioVideoController
       return false;
     }
 
+    if (this.updateRemoteVideosFromPreferences()) {
+      return true;
+    }
+
     // Check existence of all required dependencies and requisite functions
     if (
       !context.transceiverController ||
@@ -930,6 +940,89 @@ export default class DefaultAudioVideoController
       return false;
     }
     return true;
+  }
+
+  // Alternative path
+  private updateRemoteVideosFromPreferences(): boolean {
+    if (this.meetingSessionContext.videoDownlinkBandwidthPolicy.wantsServerSideNetworkAdaption === undefined
+        || this.meetingSessionContext.videoDownlinkBandwidthPolicy.wantsServerSideNetworkAdaption() === ServerSideNetworkAdaption.None
+        || this.meetingSessionContext.videoDownlinkBandwidthPolicy.getVideoPreferences === undefined) {
+      return false;
+    }
+    if (!this.meetingSessionContext.videosToReceive.equal(this.meetingSessionContext.lastVideosToReceive)) {
+      return false;
+    }
+
+    const currentConfigs = this.convertVideoPreferencesToVideoSubscriptionConfiguration(
+      this.meetingSessionContext.videosToReceive.array(),
+      this.meetingSessionContext.videoDownlinkBandwidthPolicy.getVideoPreferences()
+    );
+    const removedMids: string[] = [];
+
+    for (const streamId of this.meetingSessionContext.lastVideosToReceive.array()) {
+      if (!this.meetingSessionContext.videosToReceive.contain(streamId)) {
+        const mid = this.meetingSessionContext.transceiverController.getMidForStreamId(streamId);
+        if (mid === undefined) {
+          this.meetingSessionContext.logger.warn(`Could not find MID for stream ID: ${streamId}`);
+          continue;
+        }
+        removedMids.push(mid);
+      }
+    }
+
+    if (currentConfigs.length !== 0 || removedMids.length !== 0) {
+      this.meetingSessionContext.signalingClient.remoteVideoUpdate(currentConfigs, removedMids);
+    }
+
+    const adaptionType = this.meetingSessionContext.videoDownlinkBandwidthPolicy.wantsServerSideNetworkAdaption();
+    if (adaptionType == ServerSideNetworkAdaption.EnableBandwidthProbing) {
+      return false;
+    }
+    return true;
+  }
+
+
+  private convertVideoPreferencesToVideoSubscriptionConfiguration(
+    receiveStreamIds: number[],
+    preferences: VideoPreferences
+  ): SignalingClientVideoSubscriptionConfiguration[] {
+    if (this.meetingSessionContext.transceiverController.getMidForStreamId === undefined || preferences === undefined) {
+      return [];
+    }
+
+    const configurations = new Array<SignalingClientVideoSubscriptionConfiguration>();
+    const attendeeIdToMid = new Map<string, string>();
+    const attendeeIdToGroupId = new Map<string, number>();
+    for (const streamId of receiveStreamIds) {
+      // The local description will have been set by the time this task is running, so all
+      // of the transceivers should have `mid` set by now (see comment above `getMidForStreamId`)
+      const mid = this.meetingSessionContext.transceiverController.getMidForStreamId(streamId);
+      if (mid === undefined) {
+        if (streamId !== 0) {
+          // Send section or inactive section
+          this.meetingSessionContext.logger.warn(`Could not find MID for stream ID: ${streamId}`);
+        }
+        continue;
+      }
+      const attendeeId = this.meetingSessionContext.videoStreamIndex.attendeeIdForStreamId(streamId);
+      attendeeIdToMid.set(attendeeId, mid);
+      attendeeIdToGroupId.set(attendeeId, this.meetingSessionContext.videoStreamIndex.groupIdForStreamId(streamId));
+    }
+    for (const preference of preferences) {
+      let configuration = new SignalingClientVideoSubscriptionConfiguration;
+      const mid = attendeeIdToMid.get(preference.attendeeId);
+      if (mid === undefined) {
+        this.meetingSessionContext.logger.warn(`Could not find MID for attendee ID: ${preference.attendeeId}`);
+        continue;
+      }
+      configuration.mid = mid;
+      configuration.attendeeId = preference.attendeeId;
+      configuration.groupId = attendeeIdToGroupId.get(preference.attendeeId);
+      configuration.priority = Number.MAX_SAFE_INTEGER - preference.priority;
+      configuration.targetBitrateKbps = preference.targetSizeToBitrateKbps(preference.targetSize);
+      configurations.push(configuration);
+    }
+    return configurations;
   }
 
   updateLocalVideoFromPolicy(): boolean {
