@@ -32,6 +32,10 @@ export default class DefaultContentShareController
     contentShareConfiguration.credentials.externalUserId = configuration.credentials.externalUserId;
     contentShareConfiguration.credentials.joinToken =
       configuration.credentials.joinToken + ContentShareConstants.Modality;
+    if (configuration.useVideoUplinkBandwidthPolicyForContentShare) {
+      contentShareConfiguration.videoUplinkBandwidthPolicy = configuration.videoUplinkBandwidthPolicy;
+      contentShareConfiguration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers = configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers;
+    }
     return contentShareConfiguration;
   }
 

@@ -870,6 +870,7 @@ export default class VideoPriorityBasedPolicy implements VideoDownlinkBandwidthP
                   this.hasSimulcastStreams(remoteInfos, info.attendeeId, info.groupId) &&
                   this.canUpgrade(
                     info.avgBitrateKbps,
+                    info.maxBitrateKbps,
                     preference.targetSizeToBitrateKbps(preference.targetSize)
                   )
                 ) {
@@ -923,8 +924,8 @@ export default class VideoPriorityBasedPolicy implements VideoDownlinkBandwidthP
     return null;
   }
 
-  private canUpgrade(bitrateKbp: number, targetBitrateKbp: number): boolean {
-    if (bitrateKbp <= targetBitrateKbp) {
+  private canUpgrade(bitrateKbp: number, maxBitrateKbps: number,  targetBitrateKbp: number): boolean {
+    if (bitrateKbp <= targetBitrateKbp && maxBitrateKbps <= targetBitrateKbp ) {
       this.logger.info(
         `bwe: canUpgrade: bitrateKbp: ${bitrateKbp} targetBitrateKbp: ${targetBitrateKbp}`
       );

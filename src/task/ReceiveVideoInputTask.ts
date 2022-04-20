@@ -4,6 +4,7 @@
 import AudioVideoControllerState from '../audiovideocontroller/AudioVideoControllerState';
 import { SdkStreamServiceType } from '../signalingprotocol/SignalingProtocol.js';
 import BaseTask from './BaseTask';
+import DefaultModality from '../modality/DefaultModality';
 
 /**
  * [[ReceiveVideoInputTask]] acquires a video input from [[DeviceController]].
@@ -69,8 +70,12 @@ export default class ReceiveVideoInputTask extends BaseTask {
         return;
       }
       const attendeeId = this.context.meetingSessionConfiguration.credentials.attendeeId;
+      const isContentAttendee = new DefaultModality(attendeeId).hasModality(
+        DefaultModality.MODALITY_CONTENT
+      );
       const trackSettings = videoTracks[0].getSettings();
-      if (this.context.enableSimulcast) {
+      // In future, we would not want to do this for regular video too
+      if (this.context.enableSimulcast && !isContentAttendee) {
         const constraint = this.context.videoUplinkBandwidthPolicy.chooseMediaTrackConstraints();
         this.context.logger.info(`simulcast: choose constraint ${JSON.stringify(constraint)}`);
         try {

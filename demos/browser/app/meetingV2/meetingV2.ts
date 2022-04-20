@@ -91,6 +91,7 @@ import {
 } from './video/filters/SegmentationUtil';
 import SyntheticVideoDeviceFactory from './video/SyntheticVideoDeviceFactory';
 import { getPOSTLogger } from './util/MeetingLogger';
+import SimulcastUplinkPolicyNScaleLowStream from './video/SimulcastUplinkPolicyNScaleLowStream';
 
 let SHOULD_EARLY_CONNECT = (() => {
   return document.location.search.includes('earlyConnect=1');
@@ -549,6 +550,18 @@ export class DemoMeetingApp
     if (!this.defaultBrowserBehavior.supportDownlinkBandwidthEstimation()) {
       (document.getElementById('priority-downlink-policy') as HTMLInputElement).disabled = true;
     }
+
+    document.getElementById('simulcast').addEventListener('change', _e => {
+      const enableSimulcast = (document.getElementById('simulcast') as HTMLInputElement).checked;
+
+      const simulcastPolicyElem = document.getElementById('simulcast-policy') as HTMLSelectElement;
+
+      if (enableSimulcast) {
+        simulcastPolicyElem.style.display = 'block';
+      } else {
+        simulcastPolicyElem.style.display = 'none';
+      }
+    });
 
     document.getElementById('join-view-only').addEventListener('change', () => {
       this.isViewOnly = (document.getElementById('join-view-only') as HTMLInputElement).checked;
@@ -1786,6 +1799,14 @@ export class DemoMeetingApp
       configuration.attendeePresenceTimeoutMs = Number(timeoutMs);
     }
     configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers = this.enableSimulcast;
+    configuration.useVideoUplinkBandwidthPolicyForContentShare = this.enableSimulcast;
+    if (this.enableSimulcast) {
+      const policy = (document.getElementById('simulcast-policy') as HTMLSelectElement).value;
+      if (policy === 'nscale-lower') {
+        configuration.videoUplinkBandwidthPolicy = new SimulcastUplinkPolicyNScaleLowStream(configuration.credentials.attendeeId, this.meetingLogger);
+      }
+      configuration.useVideoUplinkBandwidthPolicyForContentShare = true;
+    }
     if (this.usePriorityBasedDownlinkPolicy) {
       this.priorityBasedDownlinkPolicy = new VideoPriorityBasedPolicy(this.meetingLogger, this.videoPriorityBasedPolicyConfig);
       configuration.videoDownlinkBandwidthPolicy = this.priorityBasedDownlinkPolicy;

@@ -59,6 +59,9 @@ export default class SimulcastTransceiverController extends DefaultTransceiverCo
           oldParam.encodings[i].scaleResolutionDownBy = encodingParamMap.get(
             SimulcastTransceiverController.LOW_LEVEL_NAME
           ).scaleResolutionDownBy;
+          // oldParam.encodings[i].maxFramerate = encodingParamMap.get(
+          //   SimulcastTransceiverController.LOW_LEVEL_NAME
+          // ).maxFramerate;
         }
         if (oldParam.encodings[i].rid === SimulcastTransceiverController.MID_LEVEL_NAME) {
           oldParam.encodings[i].maxBitrate = encodingParamMap.get(
@@ -125,7 +128,7 @@ export default class SimulcastTransceiverController extends DefaultTransceiverCo
     const encodings = params.encodings;
     let msg = 'simulcast: current encoding parameters \n';
     for (const encodingParam of encodings) {
-      msg += `rid=${encodingParam.rid} maxBitrate=${encodingParam.maxBitrate} active=${encodingParam.active} scaleDownBy=${encodingParam.scaleResolutionDownBy} \n`;
+      msg += `rid=${encodingParam.rid} maxBitrate=${encodingParam.maxBitrate} active=${encodingParam.active} scaleDownBy=${encodingParam.scaleResolutionDownBy} maxFrameRate = ${encodingParam.maxFramerate} \n`;
     }
     this.logger.info(msg);
   }
