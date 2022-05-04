@@ -32,10 +32,10 @@ export default class DefaultContentShareController
     contentShareConfiguration.credentials.externalUserId = configuration.credentials.externalUserId;
     contentShareConfiguration.credentials.joinToken =
       configuration.credentials.joinToken + ContentShareConstants.Modality;
-    if (configuration.useVideoUplinkBandwidthPolicyForContentShare) {
-      contentShareConfiguration.videoUplinkBandwidthPolicy = configuration.videoUplinkBandwidthPolicy;
-      contentShareConfiguration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers = configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers;
-    }
+    contentShareConfiguration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers =
+      configuration.enableSimulcastForContentShare;
+    contentShareConfiguration.videoUplinkBandwidthPolicy =
+      configuration.videoUplinkBandwidthPolicyForContentShare;
     return contentShareConfiguration;
   }
 
@@ -56,6 +56,10 @@ export default class DefaultContentShareController
     this.contentAudioVideo.setAudioProfile(audioProfile);
   }
 
+  // enableSimulcast(loweroptions?: { maxBitrate: number, scaleResolutionDownBy: number, maxFramerate: number}): void {
+  //
+  // }
+
   async startContentShare(stream: MediaStream): Promise<void> {
     if (!stream) {
       return;
@@ -67,9 +71,6 @@ export default class DefaultContentShareController
       });
     }
     this.contentAudioVideo.start();
-    if (this.mediaStreamBroker.mediaStream.getVideoTracks().length > 0) {
-      this.contentAudioVideo.videoTileController.startLocalVideoTile();
-    }
   }
 
   async startContentShareFromScreenCapture(
@@ -135,6 +136,12 @@ export default class DefaultContentShareController
           observerFunc(observer);
         }
       });
+    }
+  }
+
+  audioVideoDidStart(): void {
+    if (this.mediaStreamBroker.mediaStream.getVideoTracks().length > 0) {
+      this.contentAudioVideo.videoTileController.startLocalVideoTile();
     }
   }
 

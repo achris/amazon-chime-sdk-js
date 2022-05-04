@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import AudioVideoControllerState from '../audiovideocontroller/AudioVideoControllerState';
+import DefaultModality from '../modality/DefaultModality';
 import { SdkStreamServiceType } from '../signalingprotocol/SignalingProtocol.js';
 import BaseTask from './BaseTask';
-import DefaultModality from '../modality/DefaultModality';
 
 /**
  * [[ReceiveVideoInputTask]] acquires a video input from [[DeviceController]].

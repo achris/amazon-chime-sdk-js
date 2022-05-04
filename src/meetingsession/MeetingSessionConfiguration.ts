@@ -101,11 +101,15 @@ export default class MeetingSessionConfiguration {
   keepLastFrameWhenPaused: boolean = false;
 
   /**
-   * Use the same video uplink bandwidth policy as the sharer's.
+   * Feature flag to enable Simulcast for content share
+   */
+  enableSimulcastForContentShare: boolean = false;
+
+  /**
    * By default, content share attendee uses the default Nscale policy without subscribing to any video.
    * This allows to use a custom uplink policy that can allow simulcast for content share for example.
    */
-  useVideoUplinkBandwidthPolicyForContentShare: boolean = false;
+  videoUplinkBandwidthPolicyForContentShare: VideoUplinkBandwidthPolicy;
 
   /**
    * Constructs a MeetingSessionConfiguration optionally with a chime:CreateMeeting and
