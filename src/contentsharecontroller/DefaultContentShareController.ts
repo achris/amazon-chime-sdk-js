@@ -13,6 +13,8 @@ import DefaultModality from '../modality/DefaultModality';
 import AsyncScheduler from '../scheduler/AsyncScheduler';
 import { Maybe } from '../utils/Types';
 import VideoTile from '../videotile/VideoTile';
+import DefaultSimulcastUplinkPolicyForContentShare from '../videouplinkbandwidthpolicy/DefaultSimulcastUplinkPolicyForContentShare';
+import VideoEncodingParameters from '../videouplinkbandwidthpolicy/VideoEncodingParameters';
 import ContentShareConstants from './ContentShareConstants';
 import ContentShareController from './ContentShareController';
 import ContentShareMediaStreamBroker from './ContentShareMediaStreamBroker';
@@ -32,10 +34,10 @@ export default class DefaultContentShareController
     contentShareConfiguration.credentials.externalUserId = configuration.credentials.externalUserId;
     contentShareConfiguration.credentials.joinToken =
       configuration.credentials.joinToken + ContentShareConstants.Modality;
-    contentShareConfiguration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers =
-      configuration.enableSimulcastForContentShare;
-    contentShareConfiguration.videoUplinkBandwidthPolicy =
-      configuration.videoUplinkBandwidthPolicyForContentShare;
+    // contentShareConfiguration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers =
+    //   configuration.enableSimulcastForContentShare;
+    // contentShareConfiguration.videoUplinkBandwidthPolicy =
+    //   configuration.videoUplinkBandwidthPolicyForContentShare;
     return contentShareConfiguration;
   }
 
@@ -56,9 +58,20 @@ export default class DefaultContentShareController
     this.contentAudioVideo.setAudioProfile(audioProfile);
   }
 
-  // enableSimulcast(loweroptions?: { maxBitrate: number, scaleResolutionDownBy: number, maxFramerate: number}): void {
-  //
-  // }
+  enableSimulcastForContentShare(
+    enable: boolean,
+    lowerLayerEncodingParams?: VideoEncodingParameters
+  ): void {
+    this.contentAudioVideo.configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers = true;
+    if (enable) {
+      this.contentAudioVideo.configuration.videoUplinkBandwidthPolicy = new DefaultSimulcastUplinkPolicyForContentShare(
+        this.contentAudioVideo.logger,
+        lowerLayerEncodingParams
+      );
+    } else {
+      this.contentAudioVideo.configuration.videoUplinkBandwidthPolicy = undefined;
+    }
+  }
 
   async startContentShare(stream: MediaStream): Promise<void> {
     if (!stream) {

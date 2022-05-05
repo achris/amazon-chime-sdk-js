@@ -1,17 +1,15 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  ConnectionMetrics,
-  DefaultVideoCaptureAndEncodeParameter,
-  Logger,
-  SimulcastContentShareTransceiverController,
-  SimulcastUplinkObserver,
-  SimulcastUplinkPolicy,
-  VideoStreamDescription,
-  VideoStreamIndex,
-} from 'amazon-chime-sdk-js';
-
+import Logger from '../logger/Logger';
+import SimulcastContentShareTransceiverController from '../transceivercontroller/SimulcastContentShareTransceiverController';
+import DefaultVideoCaptureAndEncodeParameter from '../videocaptureandencodeparameter/DefaultVideoCaptureAndEncodeParameter';
+import VideoStreamDescription from '../videostreamindex/VideoStreamDescription';
+import VideoStreamIndex from '../videostreamindex/VideoStreamIndex';
+import ConnectionMetrics from './ConnectionMetrics';
+import SimulcastUplinkObserver from './SimulcastUplinkObserver';
+import SimulcastUplinkPolicy from './SimulcastUplinkPolicy';
+import VideoEncodingParameters from './VideoEncodingParameters';
 
 /**
  * [[DefaultSimulcastUplinkPolicy]] determines capture and encode
@@ -22,9 +20,9 @@ export default class DefaultSimulcastUplinkPolicyForContentShare implements Simu
   private currLocalDescriptions: VideoStreamDescription[] = [];
   private nextLocalDescriptions: VideoStreamDescription[] = [];
 
-  constructor(private logger: Logger) {}
+  constructor(private logger: Logger, private lowerLayerEncodingParams?: VideoEncodingParameters) {}
 
-  updateConnectionMetric({ uplinkKbps = 0 }: ConnectionMetrics): void {
+  updateConnectionMetric(_metrics: ConnectionMetrics): void {
     // Noop
   }
 
@@ -41,9 +39,9 @@ export default class DefaultSimulcastUplinkPolicyForContentShare implements Simu
     newMap.set(nameArr[0], {
       rid: nameArr[0],
       active: true,
-      scaleResolutionDownBy: 2,
-      maxBitrate: 300 * toBps,
-      maxFramerate: 5,
+      scaleResolutionDownBy: this.lowerLayerEncodingParams?.scaleResolutionDownBy || 2,
+      maxBitrate: (this.lowerLayerEncodingParams?.maxBitrateKbps || 300) * toBps,
+      maxFramerate: this.lowerLayerEncodingParams?.maxFramerate || 5,
     });
     newMap.set(nameArr[1], {
       rid: nameArr[1],
@@ -52,7 +50,9 @@ export default class DefaultSimulcastUplinkPolicyForContentShare implements Simu
       maxBitrate: 1200 * toBps,
     });
     this.logger.info(
-      `simulcast: policy:chooseEncodingParameters newQualityMap: ${this.getQualityMapString(newMap)}`
+      `simulcast: policy:chooseEncodingParameters newQualityMap: ${this.getQualityMapString(
+        newMap
+      )}`
     );
     return newMap;
   }
@@ -117,13 +117,9 @@ export default class DefaultSimulcastUplinkPolicyForContentShare implements Simu
     return qualityString;
   }
 
+  addObserver(_observer: SimulcastUplinkObserver): void {}
 
-  addObserver(observer: SimulcastUplinkObserver): void {
-  }
+  removeObserver(_observer: SimulcastUplinkObserver): void {}
 
-  removeObserver(observer: SimulcastUplinkObserver): void {
-  }
-
-  forEachObserver(observerFunc: (observer: SimulcastUplinkObserver) => void): void {
-  }
+  forEachObserver(_observerFunc: (observer: SimulcastUplinkObserver) => void): void {}
 }

@@ -1,8 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// @ts-nocheck
-
 import './styleV2.scss';
 
 import {
@@ -31,7 +29,6 @@ import {
   DefaultMeetingEventReporter,
   DefaultMeetingSession,
   DefaultModality,
-  DefaultSimulcastUplinkPolicy,
   DefaultVideoTransformDevice,
   Device,
   DeviceChangeObserver,
@@ -94,8 +91,6 @@ import {
 } from './video/filters/SegmentationUtil';
 import SyntheticVideoDeviceFactory from './video/SyntheticVideoDeviceFactory';
 import { getPOSTLogger } from './util/MeetingLogger';
-import DefaultSimulcastUplinkPolicyForContentShare from './video/DefaultSimulcastUplinkPolicyForContentShare';
-import SimulcastPolicy2 from './video/SimulcastPolicy2';
 
 let SHOULD_EARLY_CONNECT = (() => {
   return document.location.search.includes('earlyConnect=1');
@@ -1795,13 +1790,6 @@ export class DemoMeetingApp
     }
     configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers = this.enableSimulcast;
     configuration.enableSimulcastForContentShare = this.enableSimulcastForContentShare;
-    if (this.enableSimulcastForContentShare) {
-      // configuration.videoUplinkBandwidthPolicyForContentShare = new
-      // SimulcastPolicy2(configuration.credentials.attendeeId, this.meetingLogger);
-      configuration.videoUplinkBandwidthPolicyForContentShare = new DefaultSimulcastUplinkPolicyForContentShare(this.meetingLogger);
-      // configuration.videoUplinkBandwidthPolicyForContentShare = new
-      // DefaultSimulcastUplinkPolicy(configuration.credentials.attendeeId, this.meetingLogger);
-    }
     if (this.usePriorityBasedDownlinkPolicy) {
       this.priorityBasedDownlinkPolicy = new VideoPriorityBasedPolicy(this.meetingLogger, this.videoPriorityBasedPolicyConfig);
       configuration.videoDownlinkBandwidthPolicy = this.priorityBasedDownlinkPolicy;
@@ -1819,6 +1807,15 @@ export class DemoMeetingApp
       this.deviceController,
       new DefaultEventController(configuration, this.meetingLogger, this.eventReporter)
     );
+
+    if (this.enableSimulcastForContentShare) {
+      // configuration.videoUplinkBandwidthPolicyForContentShare = new
+      // SimulcastPolicy2(configuration.credentials.attendeeId, this.meetingLogger);
+      // configuration.videoUplinkBandwidthPolicyForContentShare = new DefaultSimulcastUplinkPolicyForContentShare(this.meetingLogger);
+      // configuration.videoUplinkBandwidthPolicyForContentShare = new
+      // DefaultSimulcastUplinkPolicy(configuration.credentials.attendeeId, this.meetingLogger);
+      this.meetingSession.audioVideo.enableSimulcastForContentShare(true);
+    }
 
     if ((document.getElementById('fullband-speech-mono-quality') as HTMLInputElement).checked) {
       this.meetingSession.audioVideo.setAudioProfile(AudioProfile.fullbandSpeechMono());

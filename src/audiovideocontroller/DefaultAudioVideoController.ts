@@ -154,9 +154,6 @@ export default class DefaultAudioVideoController
     this._logger = logger;
     this.sessionStateController = new DefaultSessionStateController(this._logger);
     this._configuration = configuration;
-    this.enableSimulcast =
-      configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers &&
-      new DefaultBrowserBehavior().hasChromiumWebRTC();
 
     this._webSocketAdapter = webSocketAdapter;
     this._realtimeController = new DefaultRealtimeController(mediaStreamBroker);
@@ -487,6 +484,10 @@ export default class DefaultAudioVideoController
     this.meetingSessionContext.realtimeController = this._realtimeController;
     this.meetingSessionContext.audioMixController = this._audioMixController;
     this.meetingSessionContext.audioVideoController = this;
+
+    this.enableSimulcast =
+      this.configuration.enableSimulcastForUnifiedPlanChromiumBasedBrowsers &&
+      new DefaultBrowserBehavior().hasChromiumWebRTC();
 
     const useAudioConnection: boolean = !!this.configuration.urls.audioHostURL;
 

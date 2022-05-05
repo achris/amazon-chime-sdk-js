@@ -871,7 +871,8 @@ export default class VideoPriorityBasedPolicy implements VideoDownlinkBandwidthP
                   this.canUpgrade(
                     info.avgBitrateKbps,
                     info.maxBitrateKbps,
-                    preference.targetSizeToBitrateKbps(preference.targetSize)
+                    preference.targetSizeToBitrateKbps(preference.targetSize),
+                    info.attendeeId.endsWith(ContentShareConstants.Modality)
                   )
                 ) {
                   this.logger.info(
@@ -927,9 +928,16 @@ export default class VideoPriorityBasedPolicy implements VideoDownlinkBandwidthP
   private canUpgrade(
     bitrateKbp: number,
     maxBitrateKbps: number,
-    targetBitrateKbp: number
+    targetBitrateKbp: number,
+    isContent: boolean
   ): boolean {
-    if (bitrateKbp <= targetBitrateKbp && maxBitrateKbps <= targetBitrateKbp) {
+    // For content share, even if the higher quality stream has a high max bitrate of 1200 kbps for example
+    // the avg bitrate can be way lower so have to make sure that we do not update to a higher bitrate than the
+    // target value.
+    // This does not apply to video as video uplink bandwidth could change the max bitrate value without resubscribing
+    // so the max bitrate value might not be up-to-date on the downlink side. Also in the case of video, the avg
+    // bitrate is close to the actual max bitrate.
+    if (bitrateKbp <= targetBitrateKbp && (!isContent || (maxBitrateKbps <= targetBitrateKbp))) {
       this.logger.info(
         `bwe: canUpgrade: bitrateKbp: ${bitrateKbp} targetBitrateKbp: ${targetBitrateKbp}`
       );

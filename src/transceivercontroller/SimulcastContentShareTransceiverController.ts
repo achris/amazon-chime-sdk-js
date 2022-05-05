@@ -45,14 +45,14 @@ export default class SimulcastContentShareTransceiverController extends Simulcas
       for (let i = 0; i < oldParam.encodings.length; i++) {
         if (oldParam.encodings[i].rid === SimulcastTransceiverController.LOW_LEVEL_NAME) {
           this.copyEncodingParams(
-            oldParam.encodings[i],
-            encodingParamMap.get(SimulcastTransceiverController.LOW_LEVEL_NAME)
+            encodingParamMap.get(SimulcastTransceiverController.LOW_LEVEL_NAME),
+            oldParam.encodings[i]
           );
         }
         if (oldParam.encodings[i].rid === SimulcastTransceiverController.HIGH_LEVEL_NAME) {
           this.copyEncodingParams(
-            oldParam.encodings[i],
-            encodingParamMap.get(SimulcastTransceiverController.HIGH_LEVEL_NAME)
+            encodingParamMap.get(SimulcastTransceiverController.HIGH_LEVEL_NAME),
+            oldParam.encodings[i]
           );
         }
       }

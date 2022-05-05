@@ -96,6 +96,7 @@ import DefaultSessionStateController from './sessionstatecontroller/DefaultSessi
 import DefaultSigV4 from './sigv4/DefaultSigV4';
 import DefaultSignalingClient from './signalingclient/DefaultSignalingClient';
 import DefaultSimulcastUplinkPolicy from './videouplinkbandwidthpolicy/DefaultSimulcastUplinkPolicy';
+import DefaultSimulcastUplinkPolicyForContentShare from './videouplinkbandwidthpolicy/DefaultSimulcastUplinkPolicyForContentShare';
 import DefaultTransceiverController from './transceivercontroller/DefaultTransceiverController';
 import DefaultTranscriptionController from './transcript/DefaultTranscriptionController';
 import DefaultUserAgentParser from './useragentparser/DefaultUserAgentParser';
@@ -276,6 +277,7 @@ import VideoCaptureAndEncodeParameter from './videocaptureandencodeparameter/Vid
 import VideoDownlinkBandwidthPolicy from './videodownlinkbandwidthpolicy/VideoDownlinkBandwidthPolicy';
 import VideoDownlinkObserver from './videodownlinkbandwidthpolicy/VideoDownlinkObserver';
 import VideoElementFactory from './videoelementfactory/VideoElementFactory';
+import VideoEncodingParameters from './videouplinkbandwidthpolicy/VideoEncodingParameters';
 import VideoFrameBuffer from './videoframeprocessor/VideoFrameBuffer';
 import VideoFrameProcessor from './videoframeprocessor/VideoFrameProcessor';
 import VideoFrameProcessorPipeline from './videoframeprocessor/VideoFrameProcessorPipeline';
@@ -419,6 +421,7 @@ export {
   DefaultSigV4,
   DefaultSignalingClient,
   DefaultSimulcastUplinkPolicy,
+  DefaultSimulcastUplinkPolicyForContentShare,
   DefaultTransceiverController,
   DefaultTranscriptionController,
   DefaultUserAgentParser,
@@ -606,6 +609,7 @@ export {
   VideoDownlinkBandwidthPolicy,
   VideoDownlinkObserver,
   VideoElementFactory,
+  VideoEncodingParameters,
   VideoFrameBuffer,
   VideoFrameProcessor,
   VideoFrameProcessorPipeline,

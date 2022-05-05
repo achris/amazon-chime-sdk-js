@@ -3,6 +3,7 @@
 
 import AudioProfile from '../audioprofile/AudioProfile';
 import ContentShareObserver from '../contentshareobserver/ContentShareObserver';
+import VideoEncodingParameters from '../videouplinkbandwidthpolicy/VideoEncodingParameters';
 
 export default interface ContentShareControllerFacade {
   /**
@@ -11,6 +12,11 @@ export default interface ContentShareControllerFacade {
    * already started, upon the next reconnect.
    */
   setContentAudioProfile(audioProfile: AudioProfile): void;
+
+  enableSimulcastForContentShare(
+    enable: boolean,
+    lowerLayerEncodingParams?: VideoEncodingParameters
+  ): void;
 
   /**
    * Start content sharing
